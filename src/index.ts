@@ -1,7 +1,10 @@
+require('dotenv').config()
+
 import { IncomingMessage, ServerResponse } from 'http';
 import body from 'body/json';
 import catchify from 'catchify';
-import {status} from './utils/git';
+
+import sermons from './controllers/sermons';
 
 const bodyParser = (req: IncomingMessage, res: ServerResponse): Promise<Record<string, any>> => new Promise((resolve, reject) => {
   body(req, res, (err, payload) => {
@@ -40,10 +43,9 @@ module.exports = async (req: IncomingMessage, res: ServerResponse) => {
     });
   }
 
-  await status();
 
   switch(type) {
-    case 'sermon': return sender({});
+    case 'sermon': return sender(await sermons());
     case 'blog': return sender({});
     default: {
       res.statusCode = 400;
