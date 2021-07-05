@@ -7,7 +7,13 @@
 	"license": "MIT",
 	"author": "Matt McElwee <mubatt@wyopub.com>",
 	"main": "dist/index.js",
-	"scripts": {},
+	"scripts": {
+		"build": "wedgekit build -c",
+		"build:watch": "yarn build --watch",
+		"start": "run-p build:watch start:server",
+		"start:server": "watchlist dist -- polkadot dist/index.cjs.js",
+		"start:docker": "polkadot dist/index.cjs.js"
+	},
 	"husky": {
 		"hooks": {
 			"pre-commit": "lint-staged"
@@ -36,12 +42,21 @@
 	},
 	"devDependencies": {
 		"@dmsi/prettier-config": "^1.3.0",
+		"@types/body": "^5.1.0",
 		"@types/node": "^16.0.0",
+		"@wedgekit/scripts": "^0.0.8",
 		"ava": "^3.15.0",
 		"husky": "^7.0.0",
 		"lint-staged": "^11.0.0",
+		"npm-run-all": "^4.1.5",
 		"prettier": "^2.3.2",
 		"ts-node": "^10.0.0",
-		"typescript": "^4.3.5"
+		"typescript": "^4.3.5",
+		"watchlist": "^0.2.3"
+	},
+	"dependencies": {
+		"body": "^5.1.0",
+		"catchify": "^2.6.1",
+		"polkadot": "^1.0.0"
 	}
 }
