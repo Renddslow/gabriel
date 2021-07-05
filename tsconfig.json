@@ -1,7 +1,5 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "declarationDir": "./dist",
         "outDir": "dist",
         "target": "es2018",
         "allowSyntheticDefaultImports": true,

@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import body from 'body/json';
 import catchify from 'catchify';
+import {status} from './utils/git';
 
 const bodyParser = (req: IncomingMessage, res: ServerResponse): Promise<Record<string, any>> => new Promise((resolve, reject) => {
   body(req, res, (err, payload) => {
@@ -38,6 +39,8 @@ module.exports = async (req: IncomingMessage, res: ServerResponse) => {
       errors: [{ code: 400, message: 'Missing type' }],
     });
   }
+
+  await status();
 
   switch(type) {
     case 'sermon': return sender({});
