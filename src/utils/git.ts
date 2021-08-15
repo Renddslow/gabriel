@@ -1,41 +1,53 @@
-import { spawn } from 'child_process';
+import catchify from 'catchify';
+import got from 'got';
+import { has, get } from 'dot-prop';
+import fm from 'frontmatter';
 
-type CmdOut = {
-  stdout: string[];
-  stderr: string[];
-  code: number;
-};
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-const cmd = (args: string[]): Promise<CmdOut> => new Promise((resolve) => {
-  const out: CmdOut = {
-    stdout: [],
-    stderr: [],
-    code: 0,
-  };
+export const fileExists = async (type: 'sermon' | 'blog' | 'event', permalink: string, matcher?: (frontmatter: Record<string, any>, content: string) => boolean): Promise<boolean> => {
+  const pluralizedType = type !== 'blog' ? `${type}s` : type;
 
-  const git = spawn('git', args);
+  const [err, res] = await catchify(got(`https://api.github.com/graphql`, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: `
+        query { 
+          repository(name: "flatland-site-hugo", owner:"flatlandchurch") {
+            object(expression:"content/${pluralizedType}/${permalink}.md") {
+                ...on Tree {
+                  entries {
+                      name
+                      object {
+                          ...on Blob {
+                              text
+                          }
+                      }
+                  }
+                }
+                ...on Blob {
+                    text
+                }
+            }
+          }
+      }`,
+    }),
+    headers: {
+      authorization: `Bearer ${GITHUB_TOKEN}`,
+    },
+  }).json());
 
-  git.stdout.on('data', (data) => {
-    out.stdout.push(data.toString());
-  });
-  git.stderr.on('data', (data) => {
-    out.stderr.push(data.toString());
-  });
-  git.on('close', (code) => {
-    out.code = code;
-    resolve(out);
-  });
-});
+  if (err) {
+    return false;
+  }
 
-export const pull = async (branch: string = 'main') => {
+  if (has(res.body, 'data.repository.object.text')) {
+    if (!matcher) return true;
 
-};
+    const { data, content } = fm(get(res.body, 'data.repository.object.text'));
 
-export const clone = async () => {
+    return matcher(data, content);
+  }
 
-};
-
-export const status = async () => {
-  const stuff = await cmd(['status']);
-  console.log(stuff);
+  return false;
 };

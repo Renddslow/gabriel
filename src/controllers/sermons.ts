@@ -35,6 +35,8 @@ const sermons = async () => {
     auth: authClient,
   }));
 
+  console.log(err)
+
   if (err) return {};
 
   const rows = data.data.values.slice(1);
@@ -59,9 +61,9 @@ const sermons = async () => {
     });
   });
 
-  console.log(tree);
+  console.log(tree)
 
-  return {};
+  return tree;
 };
 
 export default sermons;
