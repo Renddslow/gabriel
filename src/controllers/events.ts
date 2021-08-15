@@ -17,6 +17,7 @@ type SiteEvent = {
   image: string;
   location: string[];
   category: string;
+  content: string;
   action?: {
     label: string;
     url: string;
@@ -31,9 +32,9 @@ const formatter = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
 });
 
-const createEventContent = (event) => {
+const createEventContent = ({ content, ...event }) => {
   const data = yaml.stringify(event);
-  return `---\n${data.trim()}\n---`;
+  return `---\n${data.trim()}\n---\n${content}`;
 };
 
 const events = async () => {
@@ -60,6 +61,7 @@ const events = async () => {
       day: attributes.event_time,
       time: formatter.format(new Date(attributes.starts_at)),
       category: 'All-Church',
+      content: attributes.stripped_description,
       action: {
         label: `Sign Up`,
         url: attributes.new_registration_url,
