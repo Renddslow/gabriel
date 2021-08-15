@@ -5,7 +5,7 @@ import fm from 'frontmatter';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-export const fileExists = async (
+const fileExists = async (
   type: 'sermon' | 'blog' | 'event',
   permalink: string,
   matcher?: (frontmatter: Record<string, any>, content: string) => boolean,
@@ -57,3 +57,5 @@ export const fileExists = async (
 
   return false;
 };
+
+export default fileExists;

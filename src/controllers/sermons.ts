@@ -1,7 +1,10 @@
 import { google } from 'googleapis';
 import catchify from 'catchify';
 import slug from 'slugify';
-import { fileExists } from '../utils/git';
+import yaml from 'yaml';
+
+import fileExists from '../utils/fileExists';
+import createFile from '../utils/createFile';
 
 const ID = process.env.SERMONS_SHEET_ID;
 
@@ -32,6 +35,11 @@ const getVimeoId = (url: string) => {
   const regexpr = /\/([\d]*)$/;
   const [, match] = regexpr.exec(url);
   return parseInt(match, 10);
+};
+
+const createSermonContent = (sermon: Sermon) => {
+  const data = yaml.stringify(sermon);
+  return `---\n${data.trim()}\n---`;
 };
 
 const sermons = async () => {
@@ -88,9 +96,18 @@ const sermons = async () => {
         };
       }),
     )
-  ).filter(({ alreadyExists }) => !alreadyExists);
+  ).filter(({ alreadyExists }) => !alreadyExists) as Sermon[];
 
-  return {};
+  await Promise.all(
+    newFiles.map((content) => createFile('sermon', content.id, createSermonContent(content))),
+  );
+
+  return {
+    meta: {
+      count: newFiles.length,
+      newFiles,
+    },
+  };
 };
 
 export default sermons;
