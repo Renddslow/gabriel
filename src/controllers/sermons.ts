@@ -1,14 +1,32 @@
 import { google } from 'googleapis';
 import catchify from 'catchify';
 import slug from 'slugify';
+import { fileExists } from '../utils/git';
 
 const ID = process.env.SERMONS_SHEET_ID;
 
-const slugify = (str: string) => slug(str, {
-  replacement: '-',
-  remove: /[*+~.()'"!:@?]/g,
-  lower: true,
-});
+type Sermon = {
+  id: string;
+  video: {
+    type: string;
+    id: string;
+  };
+  speaker: {
+    permalink: string;
+    name: string;
+  };
+  title: string;
+  image: string;
+  date: string;
+  alreadyExists: boolean;
+};
+
+const slugify = (str: string) =>
+  slug(str, {
+    replacement: '-',
+    remove: /[*+~.()'"!:@?]/g,
+    lower: true,
+  });
 
 const getVimeoId = (url: string) => {
   const regexpr = /\/([\d]*)$/;
@@ -29,13 +47,13 @@ const sermons = async () => {
   });
   const authClient = await auth.getClient();
 
-  const [err, data] = await catchify(sheets.spreadsheets.values.get({
-    spreadsheetId: ID,
-    range: 'A:E',
-    auth: authClient,
-  }));
-
-  console.log(err)
+  const [err, data] = await catchify(
+    sheets.spreadsheets.values.get({
+      spreadsheetId: ID,
+      range: 'A:E',
+      auth: authClient,
+    }),
+  );
 
   if (err) return {};
 
@@ -45,7 +63,7 @@ const sermons = async () => {
     const date = new Date(row[4]);
     date.setHours(date.getHours() + 9 + 5, 30);
 
-    return ({
+    return {
       id: slugify(row[0]),
       video: {
         type: 'vimeo',
@@ -58,12 +76,21 @@ const sermons = async () => {
       title: row[0],
       image: row[3],
       date: date.toISOString(),
-    });
+    };
   });
 
-  console.log(tree)
+  const newFiles = (
+    await Promise.all(
+      tree.map(async (sermon): Promise<Sermon> => {
+        return {
+          alreadyExists: await fileExists('sermon', sermon.id),
+          ...sermon,
+        };
+      }),
+    )
+  ).filter(({ alreadyExists }) => !alreadyExists);
 
-  return tree;
+  return {};
 };
 
 export default sermons;

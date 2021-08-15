@@ -5,16 +5,21 @@ import fm from 'frontmatter';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-export const fileExists = async (type: 'sermon' | 'blog' | 'event', permalink: string, matcher?: (frontmatter: Record<string, any>, content: string) => boolean): Promise<boolean> => {
+export const fileExists = async (
+  type: 'sermon' | 'blog' | 'event',
+  permalink: string,
+  matcher?: (frontmatter: Record<string, any>, content: string) => boolean,
+): Promise<boolean> => {
   const pluralizedType = type !== 'blog' ? `${type}s` : type;
 
-  const [err, res] = await catchify(got(`https://api.github.com/graphql`, {
-    method: 'POST',
-    body: JSON.stringify({
-      query: `
+  const [err, res] = await catchify(
+    got(`https://api.github.com/graphql`, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: `
         query { 
           repository(name: "flatland-site-hugo", owner:"flatlandchurch") {
-            object(expression:"content/${pluralizedType}/${permalink}.md") {
+            object(expression:"main:content/${pluralizedType}/${permalink}.md") {
                 ...on Tree {
                   entries {
                       name
@@ -31,17 +36,18 @@ export const fileExists = async (type: 'sermon' | 'blog' | 'event', permalink: s
             }
           }
       }`,
-    }),
-    headers: {
-      authorization: `Bearer ${GITHUB_TOKEN}`,
-    },
-  }).json());
+      }),
+      headers: {
+        authorization: `Bearer ${GITHUB_TOKEN}`,
+      },
+    }).json(),
+  );
 
   if (err) {
     return false;
   }
 
-  if (has(res.body, 'data.repository.object.text')) {
+  if (has(res, 'data.repository.object.text')) {
     if (!matcher) return true;
 
     const { data, content } = fm(get(res.body, 'data.repository.object.text'));
