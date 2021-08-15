@@ -1,10 +1,10 @@
 import { google } from 'googleapis';
 import catchify from 'catchify';
-import slug from 'slugify';
 import yaml from 'yaml';
 
 import fileExists from '../utils/fileExists';
 import createFile from '../utils/createFile';
+import slugify from '../utils/slugify';
 
 const ID = process.env.SERMONS_SHEET_ID;
 
@@ -23,13 +23,6 @@ type Sermon = {
   date: string;
   alreadyExists: boolean;
 };
-
-const slugify = (str: string) =>
-  slug(str, {
-    replacement: '-',
-    remove: /[*+~.()'"!:@?]/g,
-    lower: true,
-  });
 
 const getVimeoId = (url: string) => {
   const regexpr = /\/([\d]*)$/;
@@ -99,7 +92,9 @@ const sermons = async () => {
   ).filter(({ alreadyExists }) => !alreadyExists) as Sermon[];
 
   await Promise.all(
-    newFiles.map((content) => createFile('sermon', content.id, createSermonContent(content))),
+    newFiles.map(({ id, alreadyExists, ...content }) =>
+      createFile('sermon', id, createSermonContent(content as Sermon)),
+    ),
   );
 
   return {

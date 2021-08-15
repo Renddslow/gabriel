@@ -3,6 +3,7 @@ import body from 'body/json';
 import catchify from 'catchify';
 
 import sermons from './controllers/sermons';
+import events from './controllers/events';
 
 const bodyParser = (req: IncomingMessage, res: ServerResponse): Promise<Record<string, any>> =>
   new Promise((resolve, reject) => {
@@ -48,6 +49,8 @@ module.exports = async (req: IncomingMessage, res: ServerResponse) => {
       return sender(await sermons());
     case 'blog':
       return sender({});
+    case 'event':
+      return sender(await events());
     default: {
       res.statusCode = 400;
       return sender({

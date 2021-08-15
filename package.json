@@ -12,7 +12,9 @@
 		"build": "node build.js",
 		"build:watch": "yarn build --watch",
 		"start": "polkadot dist/index.js",
-		"test:sermon": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"sermon\\\"}}\""
+		"test:sermon": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"sermon\\\"}}\"",
+		"test:event": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"event\\\"}}\""
+
 	},
 	"husky": {
 		"hooks": {
