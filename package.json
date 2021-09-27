@@ -14,9 +14,9 @@
 		"start": "polkadot dist/index.js",
 		"test:sermon": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"sermon\\\"}}\"",
 		"test:event": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"event\\\"}}\"",
+		"test:blog": "curl -X POST http://localhost:3000 -H \"Content-Type: application/json\" -d \"{\\\"data\\\":{\\\"type\\\":\\\"blog\\\"}}\"",
 		"gcr:build": "gcloud builds submit --tag gcr.io/flatland-api/gabriel",
 		"gcr:deploy": "gcloud run deploy gabriel --image gcr.io/flatland-api/gabriel --platform managed --allow-unauthenticated --region=us-central1"
-
 	},
 	"husky": {
 		"hooks": {
@@ -63,11 +63,12 @@
 	"dependencies": {
 		"body": "^5.1.0",
 		"catchify": "^2.6.1",
-		"dotenv": "^10.0.0",
 		"dot-prop": "^6.0.1",
+		"dotenv": "^10.0.0",
 		"frontmatter": "^0.0.3",
 		"googleapis": "^80.1.0",
 		"got": "^11.8.2",
+		"p-throttle": "^4.1.1",
 		"polkadot": "^1.0.0",
 		"slugify": "^1.5.3",
 		"yaml": "^1.10.2"

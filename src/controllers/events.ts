@@ -1,12 +1,11 @@
 import got from 'got';
 import catchify from 'catchify';
+import { get } from 'dot-prop';
+import pThrottle from 'p-throttle';
 
 import slugify from '../utils/slugify';
-import fileExists from '../utils/fileExists';
 import createFile from '../utils/createFile';
 import yaml from 'yaml';
-
-const CHURCHCENTER_TOKEN = process.env.CHURCHCENTER_TOKEN;
 
 type SiteEvent = {
   id: string;
@@ -38,21 +37,39 @@ const createEventContent = ({ content, ...event }) => {
 };
 
 const events = async () => {
+  const [initErr, initRes] = await catchify(got('https://flatland.churchcenter.com'));
+  const tokenRegexpr = /<meta name="csrf-token" content="(.*?)" \/>/;
+
+  const csrf = tokenRegexpr.exec(initRes.body.toString());
+
+  if (!csrf || initErr) return {};
+
+  const [, csrfToken] = csrf;
+
+  const [tokenErr, tokens] = await catchify(got('https://flatland.churchcenter.com/sessions/tokens', {
+    headers: {
+      'x-csrf-token': csrfToken,
+    },
+    method: 'POST',
+  }).json());
+
+  const orgToken = get(tokens, 'data.attributes.token', '');
+
   const [err, res] = await catchify(
     got(`https://api.churchcenter.com/registrations/v2/events`, {
       headers: {
-        authorization: `OrganizationToken ${CHURCHCENTER_TOKEN}`,
+        authorization: `OrganizationToken ${orgToken}`,
       },
     }).json(),
   );
 
-  if (err) return {};
+  if (err) {
+    console.log(err.response.body)
+    return {};
+  }
 
   const tree = res.data.map(({ id, attributes }) => {
-    const eventYear = new Date(attributes.starts_at).getFullYear();
-    const modifiedName = attributes.name.includes(eventYear.toString())
-      ? attributes.name
-      : `${attributes.name} ${eventYear}`;
+    const modifiedName = `${attributes.name} ${id}`;
 
     const data: Partial<SiteEvent> = {
       id: slugify(modifiedName),
@@ -64,7 +81,7 @@ const events = async () => {
       content: attributes.stripped_description,
       action: {
         label: `Sign Up`,
-        url: attributes.new_registration_url,
+        url: attributes.public_url,
       },
       image: attributes.logo_url,
       pco_id: id,
@@ -78,28 +95,20 @@ const events = async () => {
 
     return data;
   });
+  
+  const throttle = pThrottle({
+    limit: 1,
+    interval: 2000,
+  });
 
-  const newFiles = (
-    await Promise.all(
-      tree.map(async (event): Promise<SiteEvent> => {
-        return {
-          alreadyExists: await fileExists('event', event.id),
-          ...event,
-        };
-      }),
-    )
-  ).filter(({ alreadyExists }) => !alreadyExists) as SiteEvent[];
+  const throttled = throttle(({ id, ...content }) => createFile('event', id, createEventContent(content), 'Church Center Registrations'));
 
-  await Promise.all(
-    newFiles.map(({ id, alreadyExists, ...content }) =>
-      createFile('event', id, createEventContent(content), 'Church Center Registrations'),
-    ),
-  );
+  await Promise.all((tree as SiteEvent[]).map(throttled));
 
   return {
     meta: {
-      count: newFiles.length,
-      newFiles,
+      count: tree.length,
+      tree,
     },
   };
 };

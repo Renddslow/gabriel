@@ -4,6 +4,7 @@ import catchify from 'catchify';
 
 import sermons from './controllers/sermons';
 import events from './controllers/events';
+import blog from './controllers/blog';
 
 const bodyParser = (req: IncomingMessage, res: ServerResponse): Promise<Record<string, any>> =>
   new Promise((resolve, reject) => {
@@ -48,7 +49,7 @@ module.exports = async (req: IncomingMessage, res: ServerResponse) => {
     case 'sermon':
       return sender(await sermons());
     case 'blog':
-      return sender({});
+      return sender(await blog());
     case 'event':
       return sender(await events());
     default: {
