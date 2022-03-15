@@ -33,6 +33,7 @@ const formatter = new Intl.DateTimeFormat('en-US', {
 
 const createEventContent = ({ content, ...event }) => {
   const data = yaml.stringify(event);
+  console.log(content);
   return `---\n${data.trim()}\n---\n${content}`;
 };
 
@@ -46,12 +47,14 @@ const events = async () => {
 
   const [, csrfToken] = csrf;
 
-  const [tokenErr, tokens] = await catchify(got('https://flatland.churchcenter.com/sessions/tokens', {
-    headers: {
-      'x-csrf-token': csrfToken,
-    },
-    method: 'POST',
-  }).json());
+  const [tokenErr, tokens] = await catchify(
+    got('https://flatland.churchcenter.com/sessions/tokens', {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+      method: 'POST',
+    }).json(),
+  );
 
   const orgToken = get(tokens, 'data.attributes.token', '');
 
@@ -64,7 +67,7 @@ const events = async () => {
   );
 
   if (err) {
-    console.log(err.response.body)
+    console.log(err.response.body);
     return {};
   }
 
@@ -95,13 +98,15 @@ const events = async () => {
 
     return data;
   });
-  
+
   const throttle = pThrottle({
     limit: 1,
     interval: 2000,
   });
 
-  const throttled = throttle(({ id, ...content }) => createFile('event', id, createEventContent(content), 'Church Center Registrations'));
+  const throttled = throttle(({ id, ...content }) =>
+    createFile('event', id, createEventContent(content), 'Church Center Registrations'),
+  );
 
   await Promise.all((tree as SiteEvent[]).map(throttled));
 
